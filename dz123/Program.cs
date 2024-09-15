@@ -6,6 +6,15 @@ using System.Threading.Tasks;
 
 namespace student
 {
+    public enum Specialization
+    {
+        ComputerScience,
+        Mathematics,
+        Physics,
+        Engineering,
+        Other
+    }
+
     public class Student
     {
         private string lastName;
@@ -14,9 +23,9 @@ namespace student
         private DateTime birthDate;
         private string homeAddress;
         private string phoneNumber;
-        private List<int> homeworkGrades;
-        private List<int> courseworkGrades;
-        private List<int> examGrades;
+        public List<int> homeworkGrades;
+        public List<int> courseworkGrades;
+        public List<int> examGrades;
 
         public Student()
         {
@@ -30,7 +39,8 @@ namespace student
             courseworkGrades = new List<int>();
             examGrades = new List<int>();
         }
-        public Student(string lastName, string firstName, string middleName, 
+
+        public Student(string lastName, string firstName, string middleName,
         DateTime birthDate, string homeAddress, string phoneNumber)
         {
             this.lastName = lastName;
@@ -43,78 +53,97 @@ namespace student
             this.courseworkGrades = new List<int>();
             this.examGrades = new List<int>();
         }
+
         public string GetLastName()
         {
             return lastName;
         }
+
         public void SetLastName(string lastName)
         {
             this.lastName = lastName;
         }
+
         public string GetFirstName()
         {
             return firstName;
         }
+
         public void SetFirstName(string firstName)
         {
             this.firstName = firstName;
         }
+
         public string GetMiddleName()
         {
             return middleName;
         }
+
         public void SetMiddleName(string middleName)
         {
             this.middleName = middleName;
         }
+
         public DateTime GetBirthDate()
         {
             return birthDate;
         }
+
         public void SetBirthDate(DateTime birthDate)
         {
             this.birthDate = birthDate;
         }
+
         public string GetHomeAddress()
         {
             return homeAddress;
         }
+
         public void SetHomeAddress(string homeAddress)
         {
             this.homeAddress = homeAddress;
         }
+
         public string GetPhoneNumber()
         {
             return phoneNumber;
         }
+
         public void SetPhoneNumber(string phoneNumber)
         {
             this.phoneNumber = phoneNumber;
         }
+
         public List<int> GetHomeworkGrades()
         {
             return homeworkGrades;
         }
+
         public void SetHomeworkGrades(List<int> grades)
         {
             this.homeworkGrades = grades;
         }
+
         public List<int> GetCourseworkGrades()
         {
             return courseworkGrades;
         }
+
         public void SetCourseworkGrades(List<int> grades)
         {
             this.courseworkGrades = grades;
         }
+
         public List<int> GetExamGrades()
         {
             return examGrades;
         }
+
         public void SetExamGrades(List<int> grades)
         {
             this.examGrades = grades;
         }
+
         public void ShowStudentInfo()
         {
             Console.WriteLine("Фамилия: " + lastName);
@@ -129,23 +158,111 @@ namespace student
             Console.WriteLine("Оценки за экзамены: " + string.Join((", "), examGrades));
         }
     }
+
+    public class Group
+    {
+        private List<Student> students;
+        private string groupName;
+        private Specialization specialization;
+        private int courseNumber;
+
+        public Group()
+        {
+            students = new List<Student>();
+            groupName = "Без названия";
+            specialization = Specialization.Other;
+            courseNumber = 1;
+        }
+
+        public Group(Group otherGroup)
+        {
+            groupName = otherGroup.groupName;
+            specialization = otherGroup.specialization;
+            courseNumber = otherGroup.courseNumber;
+            students = new List<Student>(otherGroup.students.Select(s => new Student
+            (
+                s.GetLastName(),
+                s.GetFirstName(),
+                s.GetMiddleName(),
+                s.GetBirthDate(),
+                s.GetHomeAddress(),
+                s.GetPhoneNumber())
+            {
+                homeworkGrades = new List<int>(s.GetHomeworkGrades()),
+                courseworkGrades = new List<int>(s.GetCourseworkGrades()),
+                examGrades = new List<int>(s.GetExamGrades())
+            }));
+        }
+
+        public void AddStudent(Student student)
+        {
+            students.Add(student);
+        }
+
+        public void EditGroup(string groupName, Specialization specialization, int courseNumber)
+        {
+            this.groupName = groupName;
+            this.specialization = specialization;
+            this.courseNumber = courseNumber;
+        }
+
+        public void TransferStudentToGroup(Student student, Group newGroup)
+        {
+            if (students.Contains(student))
+            {
+                students.Remove(student);
+                newGroup.AddStudent(student);
+            }
+        }
+
+        public void ExpelFailedStudents()
+        {
+            students.RemoveAll(student => student.GetExamGrades().Average() < 4.0);
+        }
+
+        public void ExpelWorstStudent()
+        {
+            if (students.Count > 0)
+            {
+                Student worstStudent = students.OrderBy(s => s.GetExamGrades().Average()).First();
+                students.Remove(worstStudent);
+            }
+        }
+
+        public void ShowGroupInfo()
+        {
+            Console.WriteLine($"Группа: {groupName}, Специализация: {specialization}, Курс: {courseNumber}");
+            Console.WriteLine("Список студентов:");
+
+            var sortedStudents = students.OrderBy(s => s.GetLastName()).ThenBy(s => s.GetFirstName()).ToList();
+
+            for (int i = 0; i < sortedStudents.Count; i++)
+            {
+                Console.WriteLine($"{i + 1}. {sortedStudents[i].GetLastName()} {sortedStudents[i].GetFirstName()}");
+            }
+        }
+    }
+
     internal class Program
     {
         static void Main(string[] args)
         {
-            Student Alex = new Student(
-            lastName: "Загоруйко",
-            firstName: "Александр",
-            middleName: "Дмитриевич",
-            birthDate: new DateTime(2000, 01, 01),
-            homeAddress: "г. Одесса, ул. -, кв. -",
-            phoneNumber: "+380123456789");
+            Group group = new Group();
+            group.EditGroup("Группа 1", Specialization.ComputerScience, 2);
 
-            Alex.SetHomeworkGrades(new List<int> { 9, 8, 10 });
-            Alex.SetCourseworkGrades(new List<int> { 7, 8 });
-            Alex.SetExamGrades(new List<int> { 10, 9 });
+            Student student1 = new Student("Загоруйко", "Алексей", "Дмитриевич", new DateTime(2000, 1, 1), "Адрес 1", "+380111111111");
+            Student student2 = new Student("Михайленко", "Андрей", "Андреевич", new DateTime(2008, 4, 8), "Адрес 2", "+380222222222");
+            student1.SetExamGrades(new List<int> { 5, 4, 3 });
+            student2.SetExamGrades(new List<int> { 8, 9, 7 });
 
-            Alex.ShowStudentInfo();
+            group.AddStudent(student1);
+            group.AddStudent(student2);
+
+            group.ShowGroupInfo();
+
+            group.ExpelWorstStudent();
+
+            group.ShowGroupInfo();
         }
     }
 }
