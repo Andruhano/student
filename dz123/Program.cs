@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace student
@@ -144,6 +145,47 @@ namespace student
             this.examGrades = grades;
         }
 
+        public double GetAverageExamGrade()
+        {
+            return examGrades.Count > 0 ? examGrades.Average() : 0;
+        }
+
+        public static bool operator ==(Student s1, Student s2)
+        {
+            if (ReferenceEquals(s1, null) && ReferenceEquals(s2, null)) return true;
+            if (ReferenceEquals(s1, null) || ReferenceEquals(s2, null)) return false;
+
+            return s1.lastName == s2.lastName &&
+                   s1.firstName == s2.firstName &&
+                   s1.middleName == s2.middleName &&
+                   s1.birthDate == s2.birthDate;
+        }
+
+        public static bool operator !=(Student s1, Student s2)
+        {
+            return !(s1 == s2);
+        }
+        public static bool operator >(Student s1, Student s2)
+        {
+            return s1.GetAverageExamGrade() > s2.GetAverageExamGrade();
+        }
+        public static bool operator <(Student s1, Student s2)
+        {
+            return s1.GetAverageExamGrade() < s2.GetAverageExamGrade();
+        }
+        public static bool operator true(Student s)
+        {
+            return s.GetAverageExamGrade() >= 4.0;
+        }
+        public static bool operator false(Student s)
+        {
+            return s.GetAverageExamGrade() < 4.0;
+        }
+
+        public override bool Equals(object obj)
+        {
+            return this == obj as Student;
+        }
         public void ShowStudentInfo()
         {
             Console.WriteLine("Фамилия: " + lastName);
@@ -198,14 +240,29 @@ namespace student
         {
             students.Add(student);
         }
+        public static bool operator ==(Group g1, Group g2)
+        {
+            if (ReferenceEquals(g1, null) && ReferenceEquals(g2, null)) return true;
+            if (ReferenceEquals(g1, null) || ReferenceEquals(g2, null)) return false;
 
+            return g1.groupName == g2.groupName &&
+                   g1.specialization == g2.specialization &&
+                   g1.courseNumber == g2.courseNumber;
+        }
+        public static bool operator !=(Group g1, Group g2)
+        {
+            return !(g1 == g2);
+        }
+        public override bool Equals(object obj)
+        {
+            return this == obj as Group;
+        }
         public void EditGroup(string groupName, Specialization specialization, int courseNumber)
         {
             this.groupName = groupName;
             this.specialization = specialization;
             this.courseNumber = courseNumber;
         }
-
         public void TransferStudentToGroup(Student student, Group newGroup)
         {
             if (students.Contains(student))
@@ -214,12 +271,10 @@ namespace student
                 newGroup.AddStudent(student);
             }
         }
-
         public void ExpelFailedStudents()
         {
             students.RemoveAll(student => student.GetExamGrades().Average() < 4.0);
         }
-
         public void ExpelWorstStudent()
         {
             if (students.Count > 0)
@@ -228,7 +283,6 @@ namespace student
                 students.Remove(worstStudent);
             }
         }
-
         public void ShowGroupInfo()
         {
             Console.WriteLine($"Группа: {groupName}, Специализация: {specialization}, Курс: {courseNumber}");
@@ -242,7 +296,6 @@ namespace student
             }
         }
     }
-
     internal class Program
     {
         static void Main(string[] args)
@@ -260,9 +313,18 @@ namespace student
 
             group.ShowGroupInfo();
 
+            Console.WriteLine("Сравнение студентов по оценкам:");
+            Console.WriteLine(student1 > student2 ? "Student1 лучше" : "Student2 лучше");
+
+            Console.WriteLine("Сравнение групп:");
+            Group group2 = new Group();
+            group2.EditGroup("Группа 2", Specialization.ComputerScience, 2);
+
+            Console.WriteLine(group == group2 ? "Группы одинаковые" : "Группы разные");
+
             group.ExpelWorstStudent();
 
             group.ShowGroupInfo();
         }
     }
-}
+} 
