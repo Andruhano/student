@@ -16,7 +16,7 @@ namespace student
         Other
     }
 
-    public class Student
+    public class Student: IComparable<Student>, ICloneable
     {
         private string lastName;
         private string firstName;
@@ -145,6 +145,22 @@ namespace student
             this.examGrades = grades;
         }
 
+        public int CompareTo(Student other)
+        {
+            if (other == null) return 1;
+            return this.GetAverageExamGrade().CompareTo(other.GetAverageExamGrade());
+        }
+
+        public object Clone()
+        {
+            return new Student(lastName, firstName, middleName, birthDate, homeAddress, phoneNumber)
+            {
+                homeworkGrades = new List<int>(this.homeworkGrades),
+                courseworkGrades = new List<int>(this.courseworkGrades),
+                examGrades = new List<int>(this.examGrades)
+            };
+        }
+
         public double GetAverageExamGrade()
         {
             return examGrades.Count > 0 ? examGrades.Average() : 0;
@@ -201,7 +217,7 @@ namespace student
         }
     }
 
-    public class Group
+    public class Group : IComparable<Group>, ICloneable
     {
         private List<Student> students;
         private string groupName;
@@ -214,6 +230,23 @@ namespace student
             groupName = "Без названия";
             specialization = Specialization.Other;
             courseNumber = 1;
+        }
+
+        public int CompareTo(Group other)
+        {
+            if (other == null) return 1;
+            return this.groupName.CompareTo(other.groupName);
+        }
+        public object Clone()
+        {
+            Group clonedGroup = new Group
+            {
+                groupName = this.groupName,
+                specialization = this.specialization,
+                courseNumber = this.courseNumber,
+                students = new List<Student>(this.students.Select(student => (Student)student.Clone()))
+            };
+            return clonedGroup;
         }
 
         public Group(Group otherGroup)
@@ -310,6 +343,15 @@ namespace student
 
             group.AddStudent(student1);
             group.AddStudent(student2);
+
+            Student[] students = { student1, student2 };
+            Array.Sort(students);
+
+            Console.WriteLine("Студенты после сортировки по средней оценке экзаменов:");
+            foreach (var student in students)
+            {
+                Console.WriteLine($"{student.GetLastName()} {student.GetFirstName()} - Средняя оценка: {student.GetAverageExamGrade()}");
+            }
 
             group.ShowGroupInfo();
 
