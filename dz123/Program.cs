@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -202,6 +203,23 @@ namespace student
         {
             return this == obj as Student;
         }
+
+        public class CompareByLastName : IComparer<Student>
+        {
+            public int Compare(Student x, Student y)
+            {
+                return string.Compare(x.lastName, y.lastName);
+            }
+        }
+
+        public class CompareByAverageExamGrade : IComparer<Student>
+        {
+            public int Compare(Student x, Student y)
+            {
+                return x.GetAverageExamGrade().CompareTo(y.GetAverageExamGrade());
+            }
+        }
+
         public void ShowStudentInfo()
         {
             Console.WriteLine("Фамилия: " + lastName);
@@ -217,7 +235,7 @@ namespace student
         }
     }
 
-    public class Group : IComparable<Group>, ICloneable
+    public class Group : IComparable<Group>, ICloneable, IEnumerable<Student>
     {
         private List<Student> students;
         private string groupName;
@@ -247,6 +265,16 @@ namespace student
                 students = new List<Student>(this.students.Select(student => (Student)student.Clone()))
             };
             return clonedGroup;
+        }
+
+        public IEnumerator<Student> GetEnumerator()
+        {
+            return students.GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
         }
 
         public Group(Group otherGroup)
@@ -312,10 +340,19 @@ namespace student
         {
             if (students.Count > 0)
             {
-                Student worstStudent = students.OrderBy(s => s.GetExamGrades().Average()).First();
-                students.Remove(worstStudent);
+                
+                Student worstStudent = students
+                    .Where(s => s.examGrades.Count > 0) 
+                    .OrderBy(s => s.GetAverageExamGrade())
+                    .FirstOrDefault();
+
+                if (worstStudent != null)
+                {
+                    students.Remove(worstStudent);
+                }
             }
         }
+
         public void ShowGroupInfo()
         {
             Console.WriteLine($"Группа: {groupName}, Специализация: {specialization}, Курс: {courseNumber}");
@@ -333,39 +370,45 @@ namespace student
     {
         static void Main(string[] args)
         {
+
             Group group = new Group();
-            group.EditGroup("Группа 1", Specialization.ComputerScience, 2);
 
             Student student1 = new Student("Загоруйко", "Алексей", "Дмитриевич", new DateTime(2000, 1, 1), "Адрес 1", "+380111111111");
-            Student student2 = new Student("Михайленко", "Андрей", "Андреевич", new DateTime(2008, 4, 8), "Адрес 2", "+380222222222");
             student1.SetExamGrades(new List<int> { 5, 4, 3 });
-            student2.SetExamGrades(new List<int> { 8, 9, 7 });
+
+            Student student2 = new Student("Михайленко", "Андрей", "Андреевич", new DateTime(2008, 4, 8), "Адрес 2", "+380222222222");
+            student2.SetExamGrades(new List<int> { 8, 7, 9 });
 
             group.AddStudent(student1);
             group.AddStudent(student2);
 
-            Student[] students = { student1, student2 };
-            Array.Sort(students);
-
-            Console.WriteLine("Студенты после сортировки по средней оценке экзаменов:");
-            foreach (var student in students)
+            foreach (var student in group)
             {
-                Console.WriteLine($"{student.GetLastName()} {student.GetFirstName()} - Средняя оценка: {student.GetAverageExamGrade()}");
+                Console.WriteLine($"Студент: {student.GetLastName()}, Средняя оценка: {student.GetAverageExamGrade()}");
             }
 
-            group.ShowGroupInfo();
+            List<Student> students = new List<Student>
+            {
+                student1,
+                student2
+            };
 
-            Console.WriteLine("Сравнение студентов по оценкам:");
-            Console.WriteLine(student1 > student2 ? "Student1 лучше" : "Student2 лучше");
+            Console.WriteLine("\nСортировка по фамилии:");
+            students.Sort(new Student.CompareByLastName());
+            foreach (var student in students)
+            {
+                Console.WriteLine(student.GetLastName());
+            }
 
-            Console.WriteLine("Сравнение групп:");
-            Group group2 = new Group();
-            group2.EditGroup("Группа 2", Specialization.ComputerScience, 2);
-
-            Console.WriteLine(group == group2 ? "Группы одинаковые" : "Группы разные");
+            Console.WriteLine("\nСортировка по средней оценке:");
+            students.Sort(new Student.CompareByAverageExamGrade());
+            foreach (var student in students)
+            {
+                Console.WriteLine($"{student.GetLastName()} - Средняя оценка: {student.GetAverageExamGrade()}");
+            }
 
             group.ExpelWorstStudent();
-
+            Console.WriteLine("\nГруппа после отчисления худшего студента:");
             group.ShowGroupInfo();
         }
     }
